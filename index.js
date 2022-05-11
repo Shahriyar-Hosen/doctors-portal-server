@@ -26,6 +26,15 @@ async function run() {
     const servicesCollection = client
       .db("doctors-portal")
       .collection("services");
+
+    // Get  api to read all services
+    app.get("/services", async (req, res) => {
+      const query = {};
+      const cursor = servicesCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+    // -------------------------------------------
   } finally {
   }
 }
