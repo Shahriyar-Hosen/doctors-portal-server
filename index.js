@@ -40,8 +40,17 @@ async function run() {
     // Create booking api in db
     app.post("/booking", async (req, res) => {
       const booking = req.body;
+      const query = {
+        treatment: booking.treatment,
+        date: booking.date,
+        patient: booking.patient,
+      };
+      const exists = await bookingCollection.findOne(query);
+      if (exists) {
+        return res.send({success: false, booking: exists})
+      }
       const result = await bookingCollection.insertOne(booking);
-      res.send(result);
+      res.send({ success: true, result });
     });
     // --------------------------------------------------------
   } finally {
