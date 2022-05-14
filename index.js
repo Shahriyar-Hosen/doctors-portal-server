@@ -26,6 +26,7 @@ async function run() {
     const servicesCollection = client
       .db("doctors-portal")
       .collection("services");
+    const bookingCollection = client.db("doctors-portal").collection("booking");
 
     // Get  api to read all services
     app.get("/services", async (req, res) => {
@@ -35,6 +36,14 @@ async function run() {
       res.send(result);
     });
     // -------------------------------------------
+
+    // Create booking api in db
+    app.post("/booking", async (req, res) => {
+      const booking = req.body;
+      const result = await bookingCollection.insertOne(booking);
+      res.send(result);
+    });
+    // --------------------------------------------------------
   } finally {
   }
 }
