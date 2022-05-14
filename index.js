@@ -37,6 +37,29 @@ async function run() {
     });
     // -------------------------------------------
 
+    // Get read to available api
+    app.get("/available", async (req, res) => {
+      const date = req.query.date || "May 14, 2022";
+
+      // step 1: get all services
+      const services = await servicesCollection.find().toArray();
+
+      // step 2: get the booking of that day
+      const query = { date: date };
+      const bookings = await bookingCollection.find(query).toArray();
+
+      // step 3: for each service, find booking for that service
+      services.forEach((service) => {
+        const serviceBookings = bookings.filter(
+          (b) => b.treatment === service.name
+        );
+        const booked = serviceBookings.map((s) => s.slot);
+        const available = service.slots.filter((s) => !booked.includes(s));
+        service.available = available;
+      });
+      res.send(services);
+    });
+
     // Create booking api in db
     app.post("/booking", async (req, res) => {
       const booking = req.body;
@@ -47,7 +70,7 @@ async function run() {
       };
       const exists = await bookingCollection.findOne(query);
       if (exists) {
-        return res.send({success: false, booking: exists})
+        return res.send({ success: false, booking: exists });
       }
       const result = await bookingCollection.insertOne(booking);
       res.send({ success: true, result });
