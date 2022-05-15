@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const port = process.env.PORT || 5000;
 
@@ -27,6 +28,7 @@ async function run() {
       .db("doctors-portal")
       .collection("services");
     const bookingCollection = client.db("doctors-portal").collection("booking");
+    const userCollection = client.db("doctors-portal").collection("users");
 
     // Get  api to read all services
     app.get("/services", async (req, res) => {
@@ -92,6 +94,8 @@ async function run() {
     //  Read by  Search query
     app.get("/booking", async (req, res) => {
       const patient = req.query.patient;
+      const authorization = req.headers.authorization;
+      console.log("auth header: ", authorization);
       const query = { patient: patient };
       const bookings = await bookingCollection.find(query).toArray();
       res.send(bookings);
@@ -108,11 +112,12 @@ async function run() {
         $set: user,
       };
       const result = await userCollection.updateOne(filter, updateDoc, options);
-
-      res.send(result);
+      var token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
+      res.send({ result, token });
     });
     // -------------------------------------------
-
   } finally {
   }
 }
