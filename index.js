@@ -70,6 +70,7 @@ async function run() {
       });
       res.send(services);
     });
+    // ---------------------------------------------------------
 
     // Create booking api in db
     app.post("/booking", async (req, res) => {
@@ -87,6 +88,17 @@ async function run() {
       res.send({ success: true, result });
     });
     // --------------------------------------------------------
+
+    //  Read by  Search query
+    app.get("/booking", async (req, res) => {
+      const patient = req.query.patient;
+      const query = { patient: patient };
+      const bookings = await bookingCollection.find(query).toArray();
+      res.send(bookings);
+    });
+    // ---------------------------------------------------------
+
+
   } finally {
   }
 }
