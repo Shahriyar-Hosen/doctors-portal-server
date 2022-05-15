@@ -53,13 +53,17 @@ async function run() {
 
     // Get  api to read all services
     app.get("/services", async (req, res) => {
-      const query = {};
-      const cursor = servicesCollection.find(query);
-      const result = await cursor.toArray();
-      res.send(result);
+      const services = await servicesCollection.find().toArray();
+      res.send(services);
     });
     // -------------------------------------------
-    
+    // Get  api to read all users
+    app.get("/user", async (req, res) => {
+      const users = await userCollection.find().toArray();
+      res.send(users);
+    });
+    // -------------------------------------------
+
     //  Read by  Search query
     app.get("/booking", verifyJWT, async (req, res) => {
       const patient = req.query.patient;
@@ -68,8 +72,7 @@ async function run() {
         const query = { patient: patient };
         const bookings = await bookingCollection.find(query).toArray();
         return res.send(bookings);
-      }
-      else{
+      } else {
         return res.status(403).send({ message: "Forbidden access" });
       }
     });
