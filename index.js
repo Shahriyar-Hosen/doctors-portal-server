@@ -59,6 +59,21 @@ async function run() {
       res.send(result);
     });
     // -------------------------------------------
+    
+    //  Read by  Search query
+    app.get("/booking", verifyJWT, async (req, res) => {
+      const patient = req.query.patient;
+      const decodedEmail = req.decoded.email;
+      if (patient === decodedEmail) {
+        const query = { patient: patient };
+        const bookings = await bookingCollection.find(query).toArray();
+        return res.send(bookings);
+      }
+      else{
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+    });
+    // ---------------------------------------------------------
 
     // Get read to available api
     // Warning: This is not the proper way to query multiple collection.
@@ -111,21 +126,6 @@ async function run() {
       res.send({ success: true, result });
     });
     // --------------------------------------------------------
-
-    //  Read by  Search query
-    app.get("/booking", verifyJWT, async (req, res) => {
-      const patient = req.query.patient;
-      const decodedEmail = req.decoded.email;
-      if (patient === decodedEmail) {
-        const query = { patient: patient };
-        const bookings = await bookingCollection.find(query).toArray();
-        return res.send(bookings);
-      }
-      else{
-        return res.status(403).send({ message: "Forbidden access" });
-      }
-    });
-    // ---------------------------------------------------------
 
     //  Update (upsert / insert) user data in db
     app.put("/user/:email", async (req, res) => {
