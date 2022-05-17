@@ -53,7 +53,10 @@ async function run() {
 
     // Get  api to read all services
     app.get("/services", async (req, res) => {
-      const services = await servicesCollection.find().toArray();
+      const services = await servicesCollection
+        .find()
+        .project({ name: 1 })
+        .toArray();
       res.send(services);
     });
     // -------------------------------------------
