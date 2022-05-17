@@ -190,6 +190,14 @@ async function run() {
       const result = await doctorCollection.insertOne(doctor);
       res.send(result);
     });
+    // ---------------------------------------------
+
+    // Get Method / read all doctors
+    app.get("/doctors", verifyJWT, verifyAdmin, async (req, res) => {
+      const doctors = await doctorCollection.find().toArray();
+      res.send(doctors);
+    });
+    // -------------------------------------------------
   } finally {
   }
 }
