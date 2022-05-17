@@ -3,6 +3,8 @@ const app = express();
 const cors = require("cors");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
+const sgTransport = require("nodemailer-sendgrid-transport");
 const { MongoClient, ServerApiVersion } = require("mongodb");
 const port = process.env.PORT || 5000;
 
@@ -41,6 +43,44 @@ function verifyJWT(req, res, next) {
     next();
   });
 }
+
+var emailSenderOptions = {
+  auth: {
+    api_key: process.env.EMAIL_SENDER_KEY,
+  },
+};
+
+const emailClient = nodemailer.createTransport(sgTransport(emailSenderOptions));
+
+const sendAppointmentEmail = (booking) => {
+  const { patient, patientName, treatment, date, slot } = booking;
+  var email = {
+    from: process.env.EMAIL_SENDER,
+    to: patient,
+    subject: `Your Appointment for ${treatment} is on ${date} at ${slot} is Confirmed`,
+    text: `Your Appointment for ${treatment} is on ${date} at ${slot} is Confirmed`,
+    html: `
+      <div>
+        <p> Hello ${patientName}, </p>
+        <h2>Your Appointment for ${treatment} is confirmed</h2>
+        <p>Looking forward to seeing you on ${date} at ${slot}.</p>
+        
+        <h4>Our Address</h4>
+        <p>Andor Killa Bandorban</p>
+        <p>Bangladesh</p>
+        <a href="https://web.programming-hero.com/">Unsubscribe</a>
+      </div>
+    `
+  };
+
+  emailClient.sendMail(email, function (err, info) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log("Message sent: ", info);
+    }
+  });
+};
 
 // async await function
 async function run() {
@@ -144,6 +184,8 @@ async function run() {
         return res.send({ success: false, booking: exists });
       }
       const result = await bookingCollection.insertOne(booking);
+      console.log("sending email");
+      sendAppointmentEmail(booking);
       res.send({ success: true, result });
     });
     // --------------------------------------------------------
