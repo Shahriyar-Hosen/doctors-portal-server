@@ -202,8 +202,8 @@ async function run() {
     //  Delete doctor in db
     app.delete("/doctor/:email", verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
-      const query = { email: email };
-      const result = await doctorCollection.deleteOne(query);
+      const filter = { email: email };
+      const result = await doctorCollection.deleteOne(filter);
       res.send(result);
     });
     // -------------------------------------------
