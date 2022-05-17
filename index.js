@@ -19,6 +19,8 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
+// Verify JWT Middleware
+
 function verifyJWT(req, res, next) {
   // steps: 1
   const authorization = req.headers.authorization;
@@ -51,6 +53,18 @@ async function run() {
     const bookingCollection = client.db("doctors-portal").collection("booking");
     const userCollection = client.db("doctors-portal").collection("users");
     const doctorCollection = client.db("doctors-portal").collection("doctor");
+
+    //  Verify Admin Middleware
+
+    const verifyAdmin = async (req, res, next) => {
+      const requester = req.decoded.email;
+      const requestAccount = await userCollection.findOne({ email: requester });
+      if (requestAccount.role === "admin") {
+        next();
+      } else {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+    };
 
     // Get  api to read all services
     app.get("/services", async (req, res) => {
@@ -143,20 +157,14 @@ async function run() {
     });
 
     //  Update (upsert / insert) user admin data in db
-    app.put("/user/admin/:email", verifyJWT, async (req, res) => {
+    app.put("/user/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
-      const requester = req.decoded.email;
-      const requestAccount = await userCollection.findOne({ email: requester });
-      if (requestAccount.role === "admin") {
-        const filter = { email: email };
-        const updateDoc = {
-          $set: { role: "admin" },
-        };
-        const result = await userCollection.updateOne(filter, updateDoc);
-        res.send(result);
-      } else {
-        return res.status(403).send({ message: "Forbidden access" });
-      }
+      const filter = { email: email };
+      const updateDoc = {
+        $set: { role: "admin" },
+      };
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
     });
     // -------------------------------------------
 
@@ -177,7 +185,7 @@ async function run() {
     });
     // -------------------------------------------
     //  Post method / add a doctor
-    app.post("/doctor", async (req, res) => {
+    app.post("/doctor", verifyJWT, verifyAdmin, async (req, res) => {
       const doctor = req.body;
       const result = await doctorCollection.insertOne(doctor);
       res.send(result);
