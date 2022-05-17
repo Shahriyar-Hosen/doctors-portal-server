@@ -198,6 +198,15 @@ async function run() {
       res.send(doctors);
     });
     // -------------------------------------------------
+
+    //  Delete doctor in db
+    app.delete("/doctor/:email", verifyJWT, verifyAdmin, async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await doctorCollection.deleteOne(query);
+      res.send(result);
+    });
+    // -------------------------------------------
   } finally {
   }
 }
