@@ -234,6 +234,20 @@ async function run() {
     });
     // -------------------------------------------
 
+    //  Update payment data in db
+    app.put("/booking/:id", async (req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = { _id: ObjectId(id) };
+      const updateDoc = {
+        $set: { paid: true, transactionId: payment.transactionId },
+      };
+      const UpdatedBooking = await userCollection.updateOne(filter, updateDoc);
+      const result = await paymentCollection.insertOne(payment);
+      res.send(updateDoc);
+    });
+    // -------------------------------------------
+
     // Get Admin user search by email
     app.get("/admin/:email", async (req, res) => {
       const email = req.params.email;
