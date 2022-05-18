@@ -7,6 +7,7 @@ const nodemailer = require("nodemailer");
 const sgTransport = require("nodemailer-sendgrid-transport");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 5000;
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // Middleware
 app.use(cors());
@@ -94,6 +95,7 @@ async function run() {
     const bookingCollection = client.db("doctors-portal").collection("booking");
     const userCollection = client.db("doctors-portal").collection("users");
     const doctorCollection = client.db("doctors-portal").collection("doctor");
+    const paymentCollection = client.db("doctors-portal").collection("payment");
 
     //  Verify Admin Middleware
 
@@ -106,6 +108,27 @@ async function run() {
         return res.status(403).send({ message: "Forbidden access" });
       }
     };
+    // =========================================
+
+    app.post("/create-payment-intent", async (req, res) => {
+      const { price } = req.body;
+      const amount = price * 100;
+      console.log("price ", price);
+      console.log("amount ", amount);
+      const paymentIntent = await stripe.paymentIntents.create({
+        // amount: calculateOrderAmount(amount),
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+        // automatic_payment_methods: {
+        //   enabled: true,
+        // },
+      });
+      console.log("paymentIntent", paymentIntent);
+      res.send({ clientSecret: paymentIntent.client_secret });
+    });
+
+    // -----------------------------------------------------------------------------------
 
     // Get  api to read all services
     app.get("/services", async (req, res) => {
