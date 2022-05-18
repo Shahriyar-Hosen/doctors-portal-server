@@ -5,7 +5,7 @@ require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const sgTransport = require("nodemailer-sendgrid-transport");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 5000;
 
 // Middleware
@@ -70,7 +70,7 @@ const sendAppointmentEmail = (booking) => {
         <p>Bangladesh</p>
         <a href="https://web.programming-hero.com/">Unsubscribe</a>
       </div>
-    `
+    `,
   };
 
   emailClient.sendMail(email, function (err, info) {
@@ -81,6 +81,7 @@ const sendAppointmentEmail = (booking) => {
     }
   });
 };
+// =============================================
 
 // async await function
 async function run() {
@@ -189,6 +190,15 @@ async function run() {
       res.send({ success: true, result });
     });
     // --------------------------------------------------------
+
+    // Get  API to Read by booking using ID
+    app.get("/booking/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await bookingCollection.findOne(query);
+      res.send(result);
+    });
+    // -------------------------------------------
 
     // Get Admin user search by email
     app.get("/admin/:email", async (req, res) => {
