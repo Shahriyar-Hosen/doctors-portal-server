@@ -7,7 +7,9 @@ const nodemailer = require("nodemailer");
 const sgTransport = require("nodemailer-sendgrid-transport");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const port = process.env.PORT || 5000;
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const stripe = require("stripe")(
+  "sk_test_51L0f1oKV9SXZr5OTJs0manKgGiGSJKj5JSLysLW4xWVcMKqU1ToF8cgZS16HPxzFA9Vh0JeumRrX7j5l8f6xa6CM00fRTA4CB7"
+);
 
 // Middleware
 app.use(cors());
@@ -102,18 +104,16 @@ function sendPaymentConfirmationEmail(booking) {
         <p>Bangladesh</p>
         <a href="https://web.programming-hero.com/">unsubscribe</a>
       </div>
-    `
+    `,
   };
 
   emailClient.sendMail(email, function (err, info) {
     if (err) {
       console.log(err);
-    }
-    else {
-      console.log('Message sent: ', info);
+    } else {
+      console.log("Message sent: ", info);
     }
   });
-
 }
 
 // =============================================
@@ -123,6 +123,8 @@ async function run() {
   // try catch finally
   try {
     await client.connect();
+    // ==============================================
+    // Collection
     const servicesCollection = client
       .db("doctors-portal")
       .collection("services");
@@ -130,9 +132,9 @@ async function run() {
     const userCollection = client.db("doctors-portal").collection("users");
     const doctorCollection = client.db("doctors-portal").collection("doctor");
     const paymentCollection = client.db("doctors-portal").collection("payment");
+    // ================================================
 
     //  Verify Admin Middleware
-
     const verifyAdmin = async (req, res, next) => {
       const requester = req.decoded.email;
       const requestAccount = await userCollection.findOne({ email: requester });
@@ -144,11 +146,9 @@ async function run() {
     };
     // =========================================
 
-    /* app.post("/create-payment-intent", async (req, res) => {
+    app.post("/create-payment-intent", async (req, res) => {
       const { price } = req.body;
       const amount = price * 100;
-      console.log("price ", price);
-      console.log("amount ", amount);
       const paymentIntent = await stripe.paymentIntents.create({
         // amount: calculateOrderAmount(amount),
         amount: amount,
@@ -160,19 +160,7 @@ async function run() {
       });
       console.log("paymentIntent", paymentIntent);
       res.send({ clientSecret: paymentIntent.client_secret });
-    }); */
-    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
-      const service = req.body;
-      const price = service.price;
-      const amount = price * 100;
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: amount,
-        currency: "usd",
-        payment_method_types: ["card"],
-      });
-      res.send({ clientSecret: paymentIntent.client_secret });
     });
-
     // -----------------------------------------------------------------------------------
 
     // Get  api to read all services
@@ -269,17 +257,23 @@ async function run() {
     // -------------------------------------------
 
     //  Update payment data in db
-    app.put("/booking/:id", async (req, res) => {
-      const id = req.params.id;
+    app.patch('/booking/:id', verifyJWT, async(req, res) =>{
+      const id  = req.params.id;
       const payment = req.body;
-      const filter = { _id: ObjectId(id) };
-      const updateDoc = {
-        $set: { paid: true, transactionId: payment.transactionId },
-      };
-      const UpdatedBooking = await userCollection.updateOne(filter, updateDoc);
+      const filter = {_id: ObjectId(id)};
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId
+        }
+      }
+
       const result = await paymentCollection.insertOne(payment);
-      res.send(updateDoc);
-    });
+      const updatedBooking = await bookingCollection.updateOne(filter, updatedDoc);
+      res.send(updatedBooking);
+    })
+
+
     // -------------------------------------------
 
     // Get Admin user search by email
